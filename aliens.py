@@ -1,6 +1,7 @@
 import math
 import random
 from dataclasses import dataclass
+from typing import Tuple
 
 import pygame
 
@@ -29,6 +30,14 @@ GREY = (18, 18, 28)
 # Gameplay constants
 GRAVITY = 0.18
 TURRET_STRAFE_SPEED = 6.0
+
+render_cache: dict[Tuple[int, int, int], pygame.Surface] = {}
+# Icon
+def render_char(ch: str, color: Tuple[int, int, int]) -> pygame.Surface:
+    key = (ch, color)
+    font = pygame.font.SysFont("vl pgothic", 32, bold=True)
+    surf = font.render(ch, True, color)
+    return surf
 
 
 def clamp(v, lo, hi):
@@ -158,7 +167,7 @@ class Particle:
         self.vy += GRAVITY * 0.4
         self.y += self.vy
         # Fade life
-        self.life -= 1
+        self.life -= 0.6
 
 
 class ParticleSystem:
@@ -166,7 +175,7 @@ class ParticleSystem:
         self.particles: list[Particle] = []
         self.max_particles = max_particles
 
-    def spawn_explosion(self, x, y, count=1000):
+    def spawn_explosion(self, x, y, count=1500):
         # Cap total particles to avoid perf issues
         available = max(0, self.max_particles - len(self.particles))
         n = min(count, available)
@@ -176,7 +185,7 @@ class ParticleSystem:
             vy = random.uniform(-1.0, -0.2)
             life = random.randint(20, 50)
             # Sparkly colors with occasional bright white blink
-            base_colors = [YELLOW, ORANGE, MAGENTA, CYAN, PURPLE, BLUE, GREEN, RED]
+            base_colors = [YELLOW, ORANGE, RED]
             color = random.choice(base_colors)
             blink = random.random() < 0.1
             self.particles.append(Particle(x, y, angle, speed, vy, life, color, blink))
@@ -205,7 +214,7 @@ class ParticleSystem:
 class Turret:
     x: float
     y: float
-    angle: float = -math.pi / 2  # up
+    angle: float = -math.pi # up
     cooldown: int = 0
     fire_rate: int = 8  # frames between shots when holding
     shield: int = 130
@@ -215,11 +224,15 @@ class Turret:
 
     def nudge(self, delta):
         self.angle += delta
-        self.angle = clamp(self.angle, -math.pi + 0.2, -0.2)
+        self.angle = clamp(self.angle, -math.pi * 3.6, 3.6)
 
     def move(self, dx):
         # Strafe horizontally with clamp to keep shield fully on screen
         self.x = clamp(self.x + dx, 40, WIDTH - 40)
+
+    def movey(self, dy):
+        # Move vertically
+        self.y = clamp(self.y + dy, 0, HEIGHT - 20)
 
     def update(self):
         if self.cooldown > 0:
@@ -242,11 +255,11 @@ class Turret:
         # Base
         pygame.draw.circle(surf, LIGHT_GREY, (int(self.x), int(self.y)), 18)
         # Barrel
-        tip = (self.x + math.cos(self.angle) * 32, self.y + math.sin(self.angle) * 32)
-        pygame.draw.line(surf, WHITE, (self.x, self.y), tip, 6)
+        tip = (self.x + math.cos(self.angle) * 64, self.y + math.sin(self.angle) * 64)
+        pygame.draw.line(surf, WHITE, (self.x, self.y), tip, 8)
         # Forcefield (shield)
-        radius = 40
-        alpha = clamp(int(80 + 120 * (self.shield / 100)), 40, 200)
+        radius = 60
+        alpha = clamp(int(80 + 120 * (self.shield / 100)), 40, 360)
         s = pygame.Surface((radius * 2 + 4, radius * 2 + 4), pygame.SRCALPHA)
         pygame.draw.circle(
             s, (120, 200, 255, alpha), (radius + 2, radius + 2), radius, 3
@@ -273,7 +286,11 @@ def main():
     clock = pygame.time.Clock()
     font = pygame.font.SysFont("consolas", 20)
 
-    turret = Turret(WIDTH / 2, HEIGHT - 60)
+    icon = "ン"
+    iconsurface = render_char(icon, (0, 255, 0))
+    pygame.display.set_icon(iconsurface)
+
+    turret = Turret(WIDTH // 2, HEIGHT - 120)
     bullets: list[Cannonball] = []
     aliens: list[Alien] = []
     alien_shots: list[AlienShot] = []
@@ -297,7 +314,7 @@ def main():
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_r and game_over:
                     # Reset game
-                    turret = Turret(WIDTH / 2, HEIGHT - 60)
+                    turret = Turret(WIDTH // 2, HEIGHT - 120)
                     bullets.clear()
                     aliens.clear()
                     alien_shots.clear()
@@ -325,6 +342,14 @@ def main():
         if keys[pygame.K_d]:
             turret.move(TURRET_STRAFE_SPEED)
 
+        if keys[pygame.K_w]:
+            turret.movey(-TURRET_STRAFE_SPEED)
+        if keys[pygame.K_s]:
+            turret.movey(TURRET_STRAFE_SPEED)
+
+        if keys[pygame.K_ESCAPE]:
+            running = False
+
         # Fire controls
         mouse_left = pygame.mouse.get_pressed()[0]
         space_pressed = keys[pygame.K_SPACE]
@@ -346,7 +371,7 @@ def main():
                 if charging:
                     # Release -> fire a single powerful shot
                     frac = charge_time / CHARGE_TIME_MAX
-                    power = 14.0 + 10.0 * frac  # up to ~24 power
+                    power = 20.0 + 16.0 * frac  # up to ~36 power
                     shot = turret.fire(power=power)
                     # Make charged shots bigger and brighter
                     shot.r = 5 + int(5 * frac)
@@ -456,7 +481,7 @@ def main():
         particles.update()
 
         # RENDER
-        screen.fill(GREY)
+        screen.fill(BLACK)
         # Starry glittery background
         t = pygame.time.get_ticks() * 0.002
         for i in range(60):
@@ -487,7 +512,7 @@ def main():
         # HUD
         info = (
             f"Score: {score}  Shield: {max(0, turret.shield)}  "
-            f"Aim: Mouse/Arrows  Strafe: A/D  Fire: LMB(hold)+release / Space"
+            f"Aim: Mouse/Arrows  Strafe: W/A/S/D  Fire: LMB(hold)+release / Space. ESC to quit!"
         )
         txt = font.render(info, True, WHITE)
         screen.blit(txt, (16, 14))
@@ -495,7 +520,7 @@ def main():
         # Charge bar UI at bottom center
         bar_w, bar_h = 180, 10
         bar_x = WIDTH // 2 - bar_w // 2
-        bar_y = HEIGHT - 28
+        bar_y = HEIGHT - 50
         pygame.draw.rect(screen, LIGHT_GREY, (bar_x, bar_y, bar_w, bar_h), 2)
         if charging or charge_time > 0:
             frac = (charge_time / CHARGE_TIME_MAX) if CHARGE_TIME_MAX else 0
@@ -507,7 +532,7 @@ def main():
 
         if game_over:
             over = font.render("Assimilated! Press R to Restart", True, ORANGE)
-            screen.blit(over, (WIDTH / 2 - over.get_width() / 2, HEIGHT / 2 - 10))
+            screen.blit(over, (WIDTH // 2 - over.get_width() // 2, HEIGHT // 2 - 10))
 
         pygame.display.flip()
 

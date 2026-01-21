@@ -9,4 +9,3 @@ from aliens import main as run_aliens
 
 if __name__ == "__main__":
     run_aliens()
-d
