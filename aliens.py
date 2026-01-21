@@ -2,17 +2,23 @@ import math
 import random
 from dataclasses import dataclass
 from typing import Tuple
-
 import pygame
+import screeninfo
 
 # GlitterTurret vs the Aliens — glittery arcade shooter.
 # Controls:
 #   Aim: mouse (recommended). Arrow Keys nudge aim angle.
-#   Strafe: A/D to move the turret sideways.
+#   Strafe: W/A/S/D to move the turret.
 #   Fire: Space = quick shots. Hold & release Left Mouse = charged powerful shot.
 #   Restart: R (after Game Over)
 
-WIDTH, HEIGHT = 3840, 2160
+WIDTH, HEIGHT = 1600, 1000
+
+monitors = screeninfo.get_monitors()
+for monitor in monitors:
+    if monitor.is_primary:
+        WIDTH, HEIGHT = monitor.width, monitor.height
+
 FPS = 60
 RED = (255, 80, 120)
 GREEN = (100, 255, 160)
@@ -185,9 +191,9 @@ class ParticleSystem:
             vy = random.uniform(-1.0, -0.2)
             life = random.randint(20, 50)
             # Sparkly colors with occasional bright white blink
-            base_colors = [YELLOW, ORANGE, RED]
+            base_colors = [YELLOW, ORANGE, RED, LIGHT_GREY, WHITE]
             color = random.choice(base_colors)
-            blink = random.random() < 0.1
+            blink = random.random() < 0.3
             self.particles.append(Particle(x, y, angle, speed, vy, life, color, blink))
 
     def update(self):
@@ -258,8 +264,8 @@ class Turret:
         tip = (self.x + math.cos(self.angle) * 64, self.y + math.sin(self.angle) * 64)
         pygame.draw.line(surf, WHITE, (self.x, self.y), tip, 8)
         # Forcefield (shield)
-        radius = 60
-        alpha = clamp(int(80 + 120 * (self.shield / 100)), 40, 360)
+        radius = 75
+        alpha = clamp(int(80 + 120 * (self.shield / 100)), 80, 360)
         s = pygame.Surface((radius * 2 + 4, radius * 2 + 4), pygame.SRCALPHA)
         pygame.draw.circle(
             s, (120, 200, 255, alpha), (radius + 2, radius + 2), radius, 3
@@ -483,8 +489,8 @@ def main():
         # RENDER
         screen.fill(BLACK)
         # Starry glittery background
-        t = pygame.time.get_ticks() * 0.002
-        for i in range(60):
+        t = pygame.time.get_ticks() * 0.001
+        for i in range(120):
             px = (i * 131) % WIDTH
             py = int((math.sin(t + i * 0.27) * 0.5 + 0.5) * HEIGHT)
             c = (200 + (i * 3) % 55, 200 + (i * 5) % 55, 220 + (i * 7) % 35)
