@@ -1,0 +1,9 @@
+[project]
+name = "GlitterTurret_vs_the_Aliens"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.14"
+dependencies = [
+    "black>=26.1.0",
+    "pygame>=2.5.0",
+]
