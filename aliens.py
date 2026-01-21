@@ -4,14 +4,14 @@ from dataclasses import dataclass
 
 import pygame
 
-# Turret vs Aliens — glittery arcade shooter.
+# GlitterTurret vs the Aliens — glittery arcade shooter.
 # Controls:
 #   Aim: mouse (recommended). Arrow Keys nudge aim angle.
 #   Strafe: A/D to move the turret sideways.
 #   Fire: Space = quick shots. Hold & release Left Mouse = charged powerful shot.
 #   Restart: R (after Game Over)
 
-WIDTH, HEIGHT = 800, 1000
+WIDTH, HEIGHT = 3840, 2160
 FPS = 60
 RED = (255, 80, 120)
 GREEN = (100, 255, 160)
