@@ -69,7 +69,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "black", specifier = ">=26.1.0" },
-    { name = "pygame", specifier = ">=2.5.0" },
+    { name = "pygame", specifier = ">=2.6.1" },
     { name = "screeninfo", specifier = ">=0.8.1" },
 ]
 
