@@ -500,7 +500,7 @@ def main():
         # Draw aliens
         for a in aliens:
             pygame.draw.circle(screen, a.color, (int(a.x), int(a.y)), a.radius)
-            eye = (int(a.x + math.sin(t + a.x * 0.02) * 6), int(a.y - 3))
+            eye = (int(a.x + math.sin(t + a.x * 0.02) * 6 ), int(a.y - 3))
             pygame.draw.circle(screen, BLACK, eye, 4)
 
         # Draw alien shots
