@@ -7,5 +7,5 @@ pinball code that previously lived here and caused syntax/runtime errors.
 
 from aliens import main as run_aliens
 
-if __name__ == "__main__":
+if __name_ _ == "__main__":
     run_aliens()

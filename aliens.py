@@ -290,7 +290,7 @@ def main():
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Glitter Turret vs Aliens")
     clock = pygame.time.Clock()
-    font = pygame.font.SysFont("consolas", 20)
+    font = pygame.font.SysFont("System", 20, bold=True)
 
     icon = "ン"
     iconsurface = render_char(icon, (0, 255, 0))
